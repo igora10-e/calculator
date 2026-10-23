@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'history_page.dart';
+
 class CalculatorPage extends StatefulWidget {
   const CalculatorPage({super.key});
 
@@ -15,6 +17,8 @@ class _CalculatorPageState extends State<CalculatorPage> {
     ['1', '2', '3', '+'],
     ['0', ',', '='],
   ];
+
+  final List<String> _history = [];
 
   String _display = '0';
   String _expression = '';
@@ -107,6 +111,9 @@ class _CalculatorPageState extends State<CalculatorPage> {
 
     _expression = '${_format(first)} $operation ${_format(second)} =';
     _display = _format(result);
+
+    _history.insert(0, '$_expression $_display'.replaceAll('.', ','));
+
     return true;
   }
 
@@ -154,6 +161,15 @@ class _CalculatorPageState extends State<CalculatorPage> {
         _selectOperation(label);
       }
     });
+  }
+
+  void _openHistory() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) =>
+            HistoryPage(operations: List<String>.unmodifiable(_history)),
+      ),
+    );
   }
 
   Widget _buildButton(String label) {
@@ -208,12 +224,12 @@ class _CalculatorPageState extends State<CalculatorPage> {
         backgroundColor: const Color(0xFFA8C4FA),
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        actions: const [
+        actions: [
           IconButton(
-            onPressed: null,
+            onPressed: _openHistory,
             tooltip: 'Histórico',
-            disabledColor: Colors.black54,
-            icon: Icon(Icons.history),
+            color: Colors.black54,
+            icon: const Icon(Icons.history),
           ),
         ],
       ),

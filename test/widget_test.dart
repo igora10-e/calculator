@@ -17,6 +17,11 @@ String displayValue(WidgetTester tester) {
   return tester.widget<Text>(find.byKey(const Key('calculator-display'))).data!;
 }
 
+Future<void> openHistory(WidgetTester tester) async {
+  await tester.tap(find.byTooltip('Histórico'));
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets('Exibe o visor e as 18 teclas', (tester) async {
     await tester.pumpWidget(const MyApp());
@@ -80,5 +85,49 @@ void main() {
 
     await pressKeys(tester, ['2', '+', '3', '=']);
     expect(displayValue(tester), '5');
+  });
+
+  testWidgets('Mostra mensagem quando o histórico está vazio', (tester) async {
+    await tester.pumpWidget(const MyApp());
+
+    await openHistory(tester);
+
+    expect(find.text('Nenhuma operação realizada.'), findsOneWidget);
+  });
+
+  testWidgets('Preserva histórico ao limpar e ao voltar da tela', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MyApp());
+
+    await pressKeys(tester, ['8', '÷', '2', '=', 'C']);
+    await openHistory(tester);
+
+    expect(find.text('8 ÷ 2 = 4'), findsOneWidget);
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    expect(displayValue(tester), '0');
+
+    await pressKeys(tester, ['1', ',', '5', '+', '2', '=']);
+    await openHistory(tester);
+
+    expect(find.text('8 ÷ 2 = 4'), findsOneWidget);
+    expect(find.text('1,5 + 2 = 3,5'), findsOneWidget);
+
+    final newest = tester.getTopLeft(find.text('1,5 + 2 = 3,5'));
+    final oldest = tester.getTopLeft(find.text('8 ÷ 2 = 4'));
+
+    expect(newest.dy, lessThan(oldest.dy));
+  });
+
+  testWidgets('Não registra divisão por zero no histórico', (tester) async {
+    await tester.pumpWidget(const MyApp());
+
+    await pressKeys(tester, ['8', '÷', '0', '=']);
+    await openHistory(tester);
+
+    expect(find.text('Nenhuma operação realizada.'), findsOneWidget);
   });
 }
